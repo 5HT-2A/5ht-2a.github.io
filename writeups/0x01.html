@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="../assets/css/styles.css">
+		<link rel="stylesheet" href="../assets/css/prism.css">
+		<script type="text/javascript" src="../assets/prism.js"></script>
+		<title>[0x01]</title>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">
+				<h1 class="header-heading">cakehonolulu's blog</h1>
+			</div>
+			<div class="nav-bar">
+				<ul class="nav">
+					<li><a href="../index.html">Home</a></li>
+					<li><a href="../writeups.html">Writeups</a></li>
+					<li><a href="../about.html">About</a></li>
+				</ul>
+			</div>
+			<div class="content">
+				<div class="main">
+					<h1>A PS3's Browser Investigation [0x01]</h1>
+					<hr>
+					<h2>Prologue</h2>
+					<p>Since PS3's last vulnerabilty, many time has passed away already without any new exploits surfacing the scene, but a while ago i found out some people trying to adapt PS4's Webkit exploits to the PS3's Browser, and I thought, why not looking into PS3's browser engine just to see how it internally works?</p>
+					<h2>Webkit or not Webkit?</h2>
+					<p>Starting up with the research, I found myself into a dilemma, does the PS3 run pure Webkit? Or does it run some kind of different Browser Engine? So i started looking into it and found that, yes, the PS3 indeed seems to be running Webkit, but a very special one.</p></div>
+					<h2>Dissecting PS3's Webkit Engine</h2>
+					<p>From the <a href="http://doc.dl.playstation.net/doc/ps3-oss/">PS3's Open Source</a> webpage, you can download the pieces of software they used to build-up many parts of the PS3's System, so i <a href="http://doc.dl.playstation.net/doc/content/dam/corporate/eula/ps3-oss/WebKit.tar.gz">downloaded</a> the <a href="http://doc.dl.playstation.net/doc/ps3-oss/webkit.html">Webkit Engine</a> they used for it's system and I started looking into it. From the Engine's Useragent String I got this result:</p>
+					<pre><code class="language-js">Mozilla/5.0 (PLAYSTATION 3 4.81) AppleWebKit/531.22.8 (KHTML, like Gecko)</code></pre>
+					<p>This Webkit Version was launched in between March 11, 2010 and June 7, 2010 according to <a href="https://en.wikipedia.org/wiki/Safari_version_history">Wikipedia</a> so, it's several years out of date. I confirmed the Useragent string by looking into <pre><code class="language-js">MAJOR_VERSION = 531; MINOR_VERSION = 22; TINY_VERSION = 8;</code></pre> found in the Version.xcconfig file. This opens up a wide range of possibilities in terms of exploitation since there should be a lot of vulnerabilities disclosed in this large period of time. I started digging more into it and I decided I should download and test the PS4 exploits that were being ported to PS3 just to found that...</p>
+					<h2>Webkit, the Sony Way</h2>
+					<img src="../assets/img/PS3Fail.jpg">
+					<p>You may remember this section of Failoverflow's PS3 hacking presentation where Sony used a sketchy function to get a random number and that random number was 4, allowing them to defeat PS3's ECDSA system. So, Sony did it again, it's not as bad as the random number fail, but it's something you should have on your web browsing engine. Yes, Sony's Webkit build doesn't have support for TypedArrays.</p>
+					<p>TypedArrays are complex forms of Javascript Arrays that can access raw memory, help in math operations with big numbers and things like that. In fact, WebKit TypedArrays are very similar to C ones. Let's take a look on how WebKit TypedArrays do look like:</p>
+					<pre><code class="language-js">Int8Array, Uint8Array, Uint8ClampedArray, Int16Array, Uint16Array</code></pre><pre><code class="language-js">Int32Array, Uint32Array, Float32Array, Float64Array</code></pre>
+					<p>Don't they remind you of:</p>
+					<pre><code class="language-js">int8_t, uint8_t, int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t</code></pre>
+					<p>Which are C-specific.</p>
+					<p>PS3's browser doesn't have support for TypedArrays...</p>
+					<p>So, things like:</p>
+					<pre><code class="language-js">var v = new Uint32Array(0x13AC)</code></pre>
+					<pre><code class="language-js">memPressure[i] = new Uint32Array(0x10000);</code></pre>
+					<p>Will result in a JavaScript Core exception:</p>
+					<pre><code class="language-js">ReferenceError: Can't find variable: Uint32Array</code></pre>
+					<p>Making the exploitation more difficult.</p>
+					<p>Going back to our main topic, PS3 WebKit build doesn't have support for this type of Arrays so no, any modern exploitation technique won't work on the PS3 out-of-the-box and it will require more work to get it working.</p>
+					<p>Also, somewhere up in 2011-2012 Sony released the PS3's 4.10 Firmware Version which "Added" a better compatibility to the browser by making a better html5 implementation and changing bits here and there so your PS3 wouldn't freeze while searching Cats on Google Images.</p>
+					<h2>But how can we exploit PS3's WebKit engine then?</h2>
+					<p>Well, that's a matter of time, you can look up on the Internet about old Webkit bugs and test if they work on the PS3, then you could craft an exploit from them. But what's the point of running unsigned code on the userland in the PS3 nowadays when Custom Firmwares are up on all the Scenes and Downgrading has become a very used technique in order to install a full-blown Custom Firmware on the PS3? Well, there are a lot of people that can't afford a downgrader, or they don't know how to solder, or they fear that they will kill the PS3 by doing thoose things... There are a lot of reasons to research on newer PS3 models, but the first one is: Doing it for fun as past hackers did it.</p>
+					<h2>Hey! Where's my TL;DR</h2>
+					<p>Well, i'll resume this as much as I can:</p>
+					<p>Motivated by some fellas that were porting PS4 WebKit exploits to PS3, found out that they can't work on the PS3 because Sony has (Again) failed to provide a good WebKit base by removing functionalities that are useful (In this case, TypedArrays) in the Webkit exploiting world.</p>
+			</div>
+		</div>
+	</body>
+</html>
